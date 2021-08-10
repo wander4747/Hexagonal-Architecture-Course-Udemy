@@ -16,6 +16,7 @@ func Start() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/customers", ch.getAllCustomers).Methods(http.MethodGet)
+	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomer).Methods(http.MethodGet)
 
 	log.Fatal(http.ListenAndServe("localhost:9999", router))
 }

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"baking/errs"
 	"database/sql"
 	"log"
 	"time"
@@ -13,7 +14,6 @@ type CustomerRepositoryDb struct {
 }
 
 func (d CustomerRepositoryDb) FindAll() ([]Customer, error) {
-
 	findAllSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers"
 
 	rows, err := d.client.Query(findAllSql)
@@ -34,6 +34,26 @@ func (d CustomerRepositoryDb) FindAll() ([]Customer, error) {
 	}
 
 	return customer, nil
+}
+
+func (d CustomerRepositoryDb) ById(id string) (*Customer, *errs.AppError) {
+	customerSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers where customer_id = ?"
+
+	var c Customer
+	row := d.client.QueryRow(customerSql, id)
+
+	err := row.Scan(&c.ID, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errs.NewNotFoundError("customer not found")
+		} else {
+			log.Println("Error while scanning customer " + err.Error())
+			return nil, errs.NewUnexpectedError("unexpected database error")
+		}
+	}
+
+	return &c, nil
 }
 
 func NewCustomerRepositoryDb() CustomerRepositoryDb {
